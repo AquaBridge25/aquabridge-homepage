@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>아쿠아브릿지</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#070c18;--bg1:#0d1a2e;--bg2:#112240;
+  --c:#e8f0f8;--c2:rgba(232,240,248,.72);--c3:rgba(232,240,248,.4);--c4:rgba(232,240,248,.22);
+  --gold:#c8a84b;--blue:#3a6ad8;--blue2:#5a8af8;--teal:#3ab8a0;--gr:#3aaa6a;--rd:#e85050;
+  --bdr:rgba(255,255,255,.08);--r:10px;
+  --sf:Georgia,serif;--ss:-apple-system,'Helvetica Neue',Arial,sans-serif;
+}
+html,body{height:100%;font-family:var(--ss);background:var(--bg);color:var(--c2);overflow:hidden}
+
+/* ── INTRO ── */
+#intro{position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;cursor:pointer;transition:opacity .85s ease}
+#intro.out{opacity:0;pointer-events:none}
+#iw{opacity:0;transition:opacity .8s ease}
+#iw.v{opacity:1}
+#isvg{width:clamp(160px,30vw,240px)}
+#iname{font:300 clamp(18px,2.2vw,26px)/1 var(--sf);letter-spacing:.24em;color:#b0a898;opacity:0;transition:opacity .8s ease}
+#iname.v,#isub.v{opacity:1}
+#isub{font-size:11px;letter-spacing:.16em;color:var(--c3);opacity:0;transition:opacity .8s ease}
+.iskip{position:absolute;bottom:22px;font-size:9px;letter-spacing:.12em;color:var(--c4);background:none;border:none;cursor:pointer}
+
+/* ── APP / NAV ── */
+#app{display:none;position:fixed;inset:0;flex-direction:column}
+#app.v{display:flex}
+nav{flex-shrink:0;height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(12px,4vw,48px);background:rgba(7,12,24,.95);border-bottom:.5px solid var(--bdr)}
+.nbr{display:flex;align-items:center;gap:8px;cursor:pointer}
+.nbr svg{width:28px;height:28px}
+.nbrt{font:400 14px/1 var(--sf);letter-spacing:.14em;color:var(--c)}
+.nl{display:flex;gap:clamp(6px,1.5vw,20px);list-style:none}
+.nl a{font-size:11px;color:var(--c3);text-decoration:none;cursor:pointer;transition:color .2s;padding:2px 0;border-bottom:1px solid transparent}
+.nl a:hover,.nl a.on{color:var(--c);border-bottom-color:rgba(200,168,75,.4)}
+.ncta{background:var(--gold);color:#0a0800;font-size:11px;font-weight:700;border:none;border-radius:16px;padding:7px 16px;cursor:pointer;white-space:nowrap}
+#hbg{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px}
+#hbg span{width:20px;height:.5px;background:var(--c2);display:block;transition:all .3s}
+#hbg.v span:nth-child(1){transform:translateY(5.5px) rotate(45deg)}
+#hbg.v span:nth-child(2){opacity:0}
+#hbg.v span:nth-child(3){transform:translateY(-5.5px) rotate(-45deg)}
+#mback{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:198;display:none}
+#mback.v{display:block}
+#mdrw{position:fixed;top:0;right:0;bottom:0;width:68%;max-width:260px;background:var(--bg2);border-left:.5px solid var(--bdr);z-index:199;transform:translateX(100%);transition:transform .38s;display:flex;flex-direction:column;padding:70px 22px 36px;gap:2px}
+#mdrw.v{transform:translateX(0)}
+#mdrw a{font:300 17px/1 var(--sf);color:var(--c3);text-decoration:none;cursor:pointer;padding:10px 0;border-bottom:.5px solid var(--bdr);display:block;transition:color .2s}
+#mdrw a:last-child{border:none}
+#mdrw a:hover{color:var(--c)}
+
+/* ── PAGES ── */
+#stage{flex:1;overflow:hidden;position:relative}
+.pg{position:absolute;inset:0;overflow-y:auto;opacity:0;pointer-events:none;transition:opacity .4s}
+.pg.v{opacity:1;pointer-events:all}
+.pg::-webkit-scrollbar{width:2px}
+.pg::-webkit-scrollbar-thumb{background:var(--bdr)}
+.pi{padding:clamp(22px,5vh,52px) clamp(14px,4vw,52px);max-width:1040px;margin:0 auto}
+
+/* ── SHARED ── */
+.stag{font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--teal);margin-bottom:9px}
+.stit{font:400 clamp(22px,3.5vw,40px)/1.2 var(--sf);color:var(--c);margin-bottom:12px}
+.gr{width:40px;height:2px;background:var(--gold);margin:12px 0;border-radius:2px;display:block}
+.bg{background:var(--gold);color:#0a0800;font-size:12px;font-weight:700;border:none;border-radius:20px;padding:9px 20px;cursor:pointer}
+.bb{background:var(--blue);color:#fff;font-size:12px;font-weight:600;border:none;border-radius:20px;padding:9px 20px;cursor:pointer}
+.bo{background:transparent;color:var(--c);font-size:12px;border:1px solid var(--bdr);border-radius:20px;padding:8px 20px;cursor:pointer}
+.crd{background:var(--bg1);border:.5px solid var(--bdr);border-radius:var(--r);padding:clamp(16px,2.5vw,24px)}
+.divl{height:.5px;background:var(--bdr);margin:0 clamp(14px,4vw,52px)}
+
+/* ── HOME ── */
+.hero{position:relative;min-height:85vh;display:flex;flex-direction:column;justify-content:center;padding:clamp(36px,8vh,72px) clamp(14px,5vw,60px);overflow:hidden}
+.hcon{position:relative;z-index:2;max-width:600px}
+.badge{display:inline-flex;align-items:center;gap:7px;background:rgba(58,106,216,.12);border:1px solid rgba(58,106,216,.28);border-radius:16px;padding:5px 12px;font-size:11px;color:var(--blue2);letter-spacing:.1em;margin-bottom:18px}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--teal);animation:pp 2s infinite}
+@keyframes pp{0%,100%{opacity:1}50%{opacity:.4}}
+.hh1{font:400 clamp(28px,5vw,56px)/1.1 var(--sf);color:var(--c);margin-bottom:14px}
+.hh1 em{color:var(--gold);font-style:normal}
+.hbtns{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:32px}
+.hstats{display:flex;flex-wrap:wrap;gap:clamp(16px,3vw,40px)}
+.stn{font:400 clamp(20px,2.5vw,32px)/1 var(--sf);color:var(--gold)}
+.stl{font-size:10px;color:var(--c3);letter-spacing:.08em;margin-top:2px}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:1px;background:var(--bdr);border-radius:var(--r);overflow:hidden;margin-top:clamp(26px,5vh,52px)}
+.sgc{background:var(--bg1);padding:clamp(14px,2vw,22px);cursor:pointer;transition:background .25s;border-top:2px solid transparent}
+.sgc:hover{background:var(--bg2);border-top-color:var(--gold)}
+.sgi{font-size:22px;margin-bottom:10px}
+.sgtit{font:400 clamp(13px,1.4vw,16px)/1.25 var(--sf);color:var(--c);margin-bottom:5px}
+.sgd{font-size:11px;line-height:1.6;color:var(--c3)}
+.sbdg{font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:8px;margin-top:10px;display:inline-block}
+.sf2{background:rgba(58,184,160,.14);color:var(--teal);border:1px solid rgba(58,184,160,.3)}
+.sp{background:rgba(200,168,75,.12);color:var(--gold);border:1px solid rgba(200,168,75,.3)}
+
+/* ── AI PAGE ── */
+.abox{background:var(--bg1);border:.5px solid var(--bdr);border-radius:var(--r);padding:18px;margin-bottom:12px}
+.albl{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--c3);display:block;margin-bottom:8px}
+.ain{width:100%;background:var(--bg);border:.5px solid rgba(58,106,216,.3);border-radius:7px;padding:11px 13px;font-size:14px;font-family:var(--ss);color:var(--c);outline:none;resize:none;transition:border-color .2s}
+.ain:focus{border-color:var(--blue2)}
+.atbs{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.atb{font-size:11px;padding:6px 14px;border-radius:16px;border:.5px solid var(--bdr);background:transparent;color:var(--c3);cursor:pointer;transition:all .2s}
+.atb.on{background:var(--blue);border-color:var(--blue2);color:#fff}
+.agen{width:100%;margin-top:11px;padding:12px;font-size:13px;font-weight:700;background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;border:none;border-radius:8px;cursor:pointer;transition:opacity .2s}
+.agen:disabled{opacity:.5;cursor:not-allowed}
+.ares{background:var(--bg1);border:.5px solid rgba(58,106,216,.3);border-radius:var(--r);padding:18px;display:none}
+.ares.v{display:block}
+.arow{padding:11px 13px;background:var(--bg2);border-radius:7px;font-size:14px;color:var(--c);line-height:1.7;margin-bottom:7px;border-left:3px solid var(--blue2);cursor:pointer;transition:background .2s}
+.arow:last-child{margin-bottom:0}
+.arow:hover{background:#1a2e50}
+
+/* ── WRITING ── */
+.wgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+.wedit{width:100%;min-height:260px;max-height:320px;overflow-y:auto;background:var(--bg);border:.5px solid rgba(58,106,216,.3);border-radius:7px;padding:12px;font-size:15px;color:var(--c);outline:none;line-height:1.75}
+.wedit:focus{border-color:var(--blue2)}
+.wab{font-size:11px;font-weight:600;padding:8px 16px;border-radius:18px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.wab:disabled{opacity:.4;cursor:not-allowed}
+.wab.pos{background:linear-gradient(135deg,#1a8a4a,#2aaa60);color:#fff}
+.wab.neg{background:linear-gradient(135deg,#8a1a1a,#c03030);color:#fff}
+.wsb{font-size:10px;padding:4px 9px;border-radius:10px;border:none;color:#fff;cursor:pointer}
+.wsb:disabled{opacity:.4;cursor:not-allowed}
+.wcb{font-size:10px;padding:4px 10px;border-radius:10px;border:.5px solid var(--bdr);background:transparent;color:var(--c3);cursor:pointer;transition:all .2s}
+.wcb.on{color:#fff}
+.wsc{background:var(--bg2);border-radius:8px;border:.5px solid var(--bdr);padding:12px;margin-bottom:7px}
+.wscbdg{display:inline-block;font-size:9px;padding:2px 6px;border-radius:8px;color:#fff;margin-bottom:7px}
+.wscdiff{display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:4px}
+.wscdiff .fr{text-decoration:line-through;color:var(--rd)}
+.wscdiff .to{color:#5acc8a;font-weight:500}
+.wscex{font-size:11px;color:var(--c3);line-height:1.55;margin-bottom:8px}
+.wmsg{margin-top:9px;padding:9px 12px;border-radius:7px;font-size:12px;border:.5px solid;display:none}
+.wmsg.ok{background:rgba(58,184,160,.08);border-color:rgba(58,184,160,.3);color:var(--teal);display:block}
+.wmsg.er{background:rgba(232,80,80,.08);border-color:rgba(232,80,80,.3);color:var(--rd);display:block}
+
+/* ── ACCOUNTING ── */
+.accsteps{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+.acard{background:var(--bg1);border:.5px solid var(--bdr);border-radius:var(--r);padding:22px;position:relative;overflow:hidden}
+.acard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--r) var(--r) 0 0}
+.ac1::before{background:linear-gradient(90deg,var(--blue),var(--blue2))}
+.ac2::before{background:linear-gradient(90deg,var(--gr),#5acc8a)}
+.acnum{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;margin-bottom:10px}
+.ac1 .acnum{background:rgba(58,106,216,.2);color:var(--blue2)}
+.ac2 .acnum{background:rgba(58,170,106,.2);color:#5acc8a}
+.acdlb{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;background:linear-gradient(135deg,var(--blue),#1a5aaa);color:#fff;font-size:12px;font-weight:600;border:none;cursor:pointer}
+.acup{border:1.5px dashed rgba(58,106,216,.35);border-radius:8px;padding:22px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg)}
+.acup:hover,.acup.drag{border-color:var(--blue2);background:rgba(58,106,216,.06)}
+.acready{display:none;align-items:center;gap:8px;background:rgba(58,170,106,.1);border:1px solid rgba(58,170,106,.3);border-radius:7px;padding:8px 11px;margin-top:9px}
+.acready.v{display:flex}
+.acpbar{height:3px;background:var(--bdr);border-radius:3px;margin:9px 0;overflow:hidden;display:none}
+.acpbar.v{display:block}
+.acptxt{font-size:11px;color:var(--c3);text-align:center;display:none}
+.acptxt.v{display:block}
+.acsbtn{width:100%;margin-top:11px;padding:11px;border-radius:8px;background:linear-gradient(135deg,var(--gr),#2aaa60);color:#fff;font-size:13px;font-weight:700;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.acsbtn:disabled{opacity:.5;cursor:not-allowed}
+.acres{display:none;margin-top:22px}
+.acres.v{display:block}
+.acsum{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.acsc{background:var(--bg1);border-radius:var(--r);padding:14px 16px;border-top:2.5px solid transparent}
+.acsc.t{border-top-color:var(--blue2)}.acsc.e{border-top-color:var(--rd)}.acsc.w{border-top-color:var(--gold)}.acsc.o{border-top-color:var(--gr)}
+.acsc label{font-size:9px;font-weight:600;color:var(--c3);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px}
+.acsc .val{font-size:26px;font-weight:900;font-family:monospace;line-height:1}
+.acsc.t .val{color:var(--blue2)}.acsc.e .val{color:var(--rd)}.acsc.w .val{color:var(--gold)}.acsc.o .val{color:var(--gr)}
+.allok{background:rgba(58,170,106,.08);border:1px solid rgba(58,170,106,.3);border-radius:var(--r);padding:30px;text-align:center;display:none}
+.allok.v{display:block}
+.actabs{display:flex;gap:3px;background:rgba(255,255,255,.04);border-radius:8px;padding:3px;margin-bottom:14px;border:.5px solid var(--bdr);flex-wrap:wrap}
+.actab{flex:1;padding:7px 8px;background:transparent;border:none;border-radius:6px;font-size:10px;font-family:var(--ss);color:var(--c3);cursor:pointer;min-width:60px;white-space:nowrap;transition:all .2s}
+.actab.on{background:var(--bg2);color:var(--c);font-weight:700}
+.atpanel{display:none}
+.atpanel.on{display:block}
+.aicard{background:var(--bg1);border-radius:9px;border:.5px solid var(--bdr);padding:14px;display:grid;grid-template-columns:32px 1fr;gap:10px;margin-bottom:8px;position:relative;overflow:hidden}
+.aicard::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:9px 0 0 9px}
+.aicard.c::before{background:var(--rd)}.aicard.w::before{background:var(--gold)}.aicard.g::before{background:var(--gr)}
+.aiico{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.aicard.c .aiico{background:rgba(232,80,80,.12)}.aicard.w .aiico{background:rgba(200,168,75,.1)}.aicard.g .aiico{background:rgba(58,170,106,.1)}
+.aitit{font-size:12px;font-weight:700;color:var(--c);margin-bottom:4px}
+.aidtl{background:var(--bg);border:.5px solid var(--bdr);border-radius:5px;padding:6px 10px;font-family:monospace;font-size:11px;color:var(--c2);margin-bottom:6px;line-height:1.7}
+.aidtl .bd{color:var(--rd);font-weight:700}.aidtl .ok{color:var(--gr);font-weight:700}.aidtl .v2{color:var(--c);font-weight:600}
+.aisg{display:flex;gap:6px;background:rgba(58,170,106,.07);border:.5px solid rgba(58,170,106,.22);border-radius:5px;padding:7px 10px;font-size:11px}
+.aisg .si{color:var(--gr);flex-shrink:0}
+.tscroll{overflow-x:auto}
+.tscroll table{width:100%;border-collapse:collapse;font-size:11px}
+.tscroll th{background:var(--bg2);padding:7px 10px;text-align:left;font-size:9px;font-weight:700;color:var(--c3);text-transform:uppercase;border-bottom:.5px solid var(--bdr);white-space:nowrap}
+.tscroll td{padding:7px 10px;border-bottom:.5px solid rgba(255,255,255,.03);white-space:nowrap;color:var(--c2)}
+.tscroll td.n{text-align:right;font-family:monospace}.tscroll .tde{color:var(--rd);font-weight:700}.tscroll .tdo{color:var(--gr);font-weight:700}.tscroll .tds{color:var(--blue2);font-weight:700}
+.tscroll tr:hover td{background:rgba(255,255,255,.02)}
+
+/* ── COMMUNITY / PRICING / CONTACT ── */
+.upzone{border:1.5px dashed rgba(58,106,216,.35);border-radius:var(--r);padding:36px 20px;text-align:center;cursor:pointer;transition:all .2s}
+.upzone:hover{border-color:var(--blue2);background:rgba(58,106,216,.05)}
+.cmgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:18px}
+.cmpost{background:var(--bg1);border-radius:var(--r);border:.5px solid var(--bdr);overflow:hidden;cursor:pointer;transition:all .25s}
+.cmpost:hover{border-color:rgba(58,106,216,.4);transform:translateY(-2px)}
+.cmth{height:140px;display:flex;align-items:center;justify-content:center;font-size:40px;position:relative}
+.cmpl{position:absolute;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:15px}
+.cminf{padding:12px}
+.cmtit{font-size:13px;color:var(--c);margin-bottom:4px;line-height:1.35}
+.cmmeta{font-size:10px;color:var(--c3)}
+.cmtag{font-size:9px;padding:2px 7px;border-radius:7px;background:rgba(58,184,160,.12);color:var(--teal);display:inline-block;margin-top:5px;margin-right:4px}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-top:22px}
+.pcard{background:var(--bg1);border-radius:var(--r);border:.5px solid var(--bdr);padding:22px;position:relative}
+.pcard.feat{border-color:var(--gold)}
+.pbdg{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--gold);color:#0a0800;font-size:9px;font-weight:700;letter-spacing:.1em;padding:3px 12px;border-radius:10px;white-space:nowrap}
+.pname{font:400 18px/1 var(--sf);color:var(--c);margin-bottom:7px}
+.pprice{font-size:clamp(24px,3vw,36px);color:var(--gold);font-weight:700;line-height:1;margin-bottom:16px}
+.pprice span{font-size:12px;color:var(--c3);font-weight:400}
+.pfeat{list-style:none;display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
+.pfeat li{font-size:12px;color:var(--c2);display:flex;align-items:center;gap:8px}
+.pfeat li::before{content:'✓';color:var(--teal);font-size:11px;flex-shrink:0}
+.pfeat li.off{color:var(--c3)}.pfeat li.off::before{content:'✗';color:var(--c3)}
+.ctgrid{display:grid;grid-template-columns:1fr 1.4fr;gap:28px;margin-top:22px}
+.ctlinks{display:flex;flex-direction:column;gap:9px;margin-top:14px}
+.ctlink{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--c3)}
+.ctlico{width:32px;height:32px;border-radius:7px;background:var(--bg2);border:.5px solid var(--bdr);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.fld{margin-bottom:15px}
+.flbl{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--c3);display:block;margin-bottom:7px}
+.fin{width:100%;background:var(--bg1);border:.5px solid var(--bdr);border-radius:7px;padding:10px 12px;font-size:13px;color:var(--c);outline:none;transition:border-color .2s;font-family:var(--ss)}
+.fin:focus{border-color:var(--blue2)}
+textarea.fin{resize:vertical;min-height:90px}
+.ftypes{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
+.ftb{padding:8px;border-radius:7px;border:.5px solid var(--bdr);background:transparent;color:var(--c3);font-size:11px;cursor:pointer;text-align:center;transition:all .2s}
+.ftb.on{background:rgba(58,106,216,.15);border-color:var(--blue2);color:var(--blue2)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:800px){.nl,.ncta{display:none}#hbg{display:flex}.wgrid{grid-template-columns:1fr}.accsteps{grid-template-columns:1fr}.acsum{grid-template-columns:1fr 1fr}.ctgrid{grid-template-columns:1fr}}
+@media(max-width:480px){.acsum{grid-template-columns:1fr 1fr}.hh1{font-size:26px}}
+</style>
+</head>
+<body>
+
+<!-- INTRO -->
+<div id="intro">
+  <div id="iw">
+    <svg id="isvg" viewBox="0 0 260 185" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="ag" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#2a4a8a"/><stop offset="50%" stop-color="#dce8f8"/><stop offset="100%" stop-color="#2a4a8a"/></linearGradient>
+        <linearGradient id="pg" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#1a2a4a"/><stop offset="50%" stop-color="#3a6ab8"/><stop offset="100%" stop-color="#1a2a4a"/></linearGradient>
+        <linearGradient id="wg" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#1a3252" stop-opacity=".3"/><stop offset="50%" stop-color="#4a9ad8" stop-opacity=".92"/><stop offset="100%" stop-color="#1a3252" stop-opacity=".3"/></linearGradient>
+      </defs>
+      <ellipse cx="130" cy="80" rx="96" ry="72" fill="rgba(58,106,216,.1)"/>
+      <path d="M38,112 A92,92 0 0,1 222,112 L202,112 A72,72 0 0,0 58,112Z" fill="url(#ag)"/>
+      <path d="M38,112 A92,92 0 0,1 222,112" fill="none" stroke="rgba(210,230,255,.5)" stroke-width="1.6"/>
+      <path d="M58,112 A72,72 0 0,1 202,112" fill="none" stroke="rgba(210,230,255,.22)" stroke-width="1.8"/>
+      <rect x="90" y="59" width="6.5" height="53" fill="url(#pg)"/><rect x="90" y="59" width="6.5" height="2.5" fill="rgba(210,230,255,.5)"/>
+      <rect x="110" y="48" width="6.5" height="64" fill="url(#pg)"/><rect x="110" y="48" width="6.5" height="2.5" fill="rgba(210,230,255,.5)"/>
+      <rect x="143" y="48" width="6.5" height="64" fill="url(#pg)"/><rect x="143" y="48" width="6.5" height="2.5" fill="rgba(210,230,255,.5)"/>
+      <rect x="163" y="59" width="6.5" height="53" fill="url(#pg)"/><rect x="163" y="59" width="6.5" height="2.5" fill="rgba(210,230,255,.5)"/>
+      <path d="M12,116 L38,110 L222,110 L248,116 L222,123 L38,123Z" fill="#1e3878"/>
+      <line x1="38" y1="110" x2="222" y2="110" stroke="rgba(210,230,255,.38)" stroke-width="1"/>
+      <path d="M10,142 Q46,133 82,142 Q118,151 130,142 Q142,133 178,142 Q214,151 250,142" fill="none" stroke="url(#wg)" stroke-width="7.5" stroke-linecap="round"/>
+      <path d="M12,159 Q48,151 84,159 Q120,167 132,159 Q144,151 180,159 Q216,167 248,159" fill="none" stroke="url(#wg)" stroke-width="5.5" stroke-linecap="round" opacity=".55"/>
+      <circle cx="130" cy="20" r="3.2" fill="#dce8f8" opacity=".9"/>
+
+    </svg>
+    <div id="iname">아쿠아브릿지</div>
+    <div id="isub">AQUABRIDGE — 연결의 다리</div>
+  </div>
+  <button class="iskip" onclick="skipIntro()">클릭하여 건너뛰기</button>
+</div>
+
+<!-- APP -->
+<div id="app">
+<nav>
+  <div class="nbr" onclick="go('home')">
+    <svg viewBox="0 0 28 28"><path d="M2 18A11 11 0 0 1 26 18L22 18A7 7 0 0 0 6 18Z" fill="#4a7ad8"/><rect x="9" y="12" width="2.3" height="6" fill="#2a5ab8"/><rect x="12.5" y="9.5" width="2.3" height="8.5" fill="#2a5ab8"/><rect x="16" y="9.5" width="2.3" height="8.5" fill="#2a5ab8"/><rect x="19.5" y="12" width="2.3" height="6" fill="#2a5ab8"/><path d="M0 20L4 18L24 18L28 20L24 22L4 22Z" fill="#1e3878"/><path d="M0 25Q7 22 14 25Q21 28 28 25" fill="none" stroke="#3a6ab8" stroke-width="1.8" stroke-linecap="round"/></svg>
+    <span class="nbrt">아쿠아브릿지</span>
+  </div>
+  <ul class="nl">
+    <li><a onclick="go('home')">홈</a></li>
+    <li><a onclick="go('services')">서비스</a></li>
+    <li><a onclick="go('ai')">AI 체험</a></li>
+    <li><a onclick="go('writing')">글쓰기</a></li>
+    <li><a onclick="go('accounting')">회계</a></li>
+    <li><a onclick="go('community')">커뮤니티</a></li>
+    <li><a onclick="go('pricing')">요금제</a></li>
+    <li><a onclick="go('contact')">문의</a></li>
+  </ul>
+  <button class="ncta" onclick="go('ai')">무료 체험</button>
+  <div id="hbg" onclick="toggleM()"><span></span><span></span><span></span></div>
+</nav>
+<div id="mback" onclick="closeM()"></div>
+<div id="mdrw">
+  <a onclick="go('home');closeM()">홈</a>
+  <a onclick="go('services');closeM()">서비스</a>
+  <a onclick="go('ai');closeM()">AI 문장 생성</a>
+  <a onclick="go('writing');closeM()">글쓰기 도우미</a>
+  <a onclick="go('accounting');closeM()">비영리 회계</a>
+  <a onclick="go('community');closeM()">커뮤니티</a>
+  <a onclick="go('pricing');closeM()">요금제</a>
+  <a onclick="go('contact');closeM()">문의하기</a>
+</div>
+<div id="stage">
+
+<!-- HOME -->
+<div id="page-home" class="pg">
+  <section class="hero">
+    <div class="hcon">
+      <div class="badge"><span class="dot"></span>AI 기반 의사소통 플랫폼</div>
+      <h1 class="hh1">청각의 경계를 넘어,<br><em>새로운 연결</em>로</h1>
+      <p style="font-size:clamp(13px,1.2vw,15px);line-height:1.85;color:var(--c2);max-width:480px;margin-bottom:28px">수어 번역, AI 글쓰기 도우미, 비영리 회계 프로그램까지 — 하나의 플랫폼에서 해결합니다.</p>
+      <div class="hbtns"><button class="bg" onclick="go('ai')">🚀 무료 체험 시작</button><button class="bo" onclick="go('services')">서비스 살펴보기</button></div>
+      <div class="hstats"><div><div class="stn">3,200+</div><div class="stl">등록 사용자</div></div><div><div class="stn">6가지</div><div class="stl">핵심 서비스</div></div><div><div class="stn">98%</div><div class="stl">문장 정확도</div></div></div>
+    </div>
+  </section>
+  <div class="divl"></div>
+  <div class="pi">
+    <p class="stag">핵심 서비스</p><h2 class="stit">하나의 플랫폼, 여섯 가지 연결</h2>
+    <div class="sgrid">
+      <div class="sgc" onclick="go('ai')"><div class="sgi">🤖</div><div class="sgtit">AI 문장 생성</div><div class="sgd">키워드 → 한국어 문장</div><div class="sbdg sf2">무료 3회</div></div>
+      <div class="sgc" onclick="go('writing')"><div class="sgi">✏️</div><div class="sgtit">글쓰기 도우미</div><div class="sgd">육하원칙 → 자동 완성·교정</div><div class="sbdg sf2">무료</div></div>
+      <div class="sgc" onclick="go('services')"><div class="sgi">🤟</div><div class="sgtit">수어 영상 변환</div><div class="sgd">AI 아바타·텍스트 번역</div><div class="sbdg sp">유료</div></div>
+      <div class="sgc" onclick="go('accounting')"><div class="sgi">📊</div><div class="sgtit">비영리 회계</div><div class="sgd">세입지출 ↔ 결산표 검토</div><div class="sbdg sf2">무료</div></div>
+      <div class="sgc" onclick="go('community')"><div class="sgi">👥</div><div class="sgtit">커뮤니티</div><div class="sgd">수어 영상 공유 플랫폼</div><div class="sbdg sf2">무료</div></div>
+      <div class="sgc" onclick="go('services')"><div class="sgi">📄</div><div class="sgtit">행정 문서 제작</div><div class="sgd">공문·보고서 자동 생성</div><div class="sbdg sp">유료</div></div>
+    </div>
+    <div style="margin-top:28px;background:linear-gradient(135deg,rgba(58,106,216,.14),rgba(200,168,75,.07));border:.5px solid rgba(58,106,216,.22);border-radius:var(--r);padding:clamp(16px,3vw,32px);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px">
+      <div><h3 style="font:400 clamp(15px,2vw,20px)/1.2 var(--sf);color:var(--c);margin-bottom:7px">지금 바로 무료로 시작하세요</h3><p style="font-size:12px;color:var(--c2)">AI 문장 생성·글쓰기 도우미·비영리 회계를 무료로 이용하세요.</p></div>
+      <button class="bg" onclick="go('ai')">무료 체험하기 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- SERVICES -->
+<div id="page-services" class="pg"><div class="pi">
+  <p class="stag">서비스 소개</p><h2 class="stit">모든 서비스</h2><span class="gr"></span>
+  <div style="display:flex;flex-direction:column;gap:12px;margin-top:16px">
+    <div class="crd"><h3 style="font:400 17px/1 var(--sf);color:var(--c);margin-bottom:8px">🤖 AI 문장 생성</h3><p style="font-size:13px;line-height:1.8;color:var(--c2);margin-bottom:12px">키워드 입력만으로 자연스러운 한국어 문장 3개를 즉시 생성합니다. 긍정/부정/공식/일상 유형 선택 가능. 무료 3회.</p><div style="display:flex;gap:7px;flex-wrap:wrap"><button class="bb" onclick="go('ai')">지금 체험</button><button class="bo" onclick="go('pricing')">요금 보기</button></div></div>
+    <div class="crd"><h3 style="font:400 17px/1 var(--sf);color:var(--c);margin-bottom:8px">✏️ 글쓰기 도우미</h3><p style="font-size:13px;line-height:1.8;color:var(--c2);margin-bottom:12px">육하원칙을 입력하면 AI가 자연스러운 문장으로 완성합니다. 긍정/부정 변환, 맞춤법·문법 검토 포함.</p><button class="bb" onclick="go('writing')">글쓰기 도우미 열기</button></div>
+    <div class="crd"><h3 style="font:400 17px/1 var(--sf);color:var(--c);margin-bottom:8px">📊 비영리 회계 프로그램</h3><p style="font-size:13px;line-height:1.8;color:var(--c2);margin-bottom:12px">세입지출내역과 결산표를 엑셀로 작성 후 업로드하면 불일치 항목을 자동으로 탐지합니다.</p><button class="bb" onclick="go('accounting')">회계 프로그램 열기</button></div>
+    <div class="crd"><h3 style="font:400 17px/1 var(--sf);color:var(--c);margin-bottom:8px">🤟 수어 영상 변환 · 📄 행정 문서</h3><p style="font-size:13px;line-height:1.8;color:var(--c2);margin-bottom:12px">수어 영상을 AI 아바타·텍스트로 변환하거나, 키워드 기반으로 공문·보고서를 자동 생성합니다.</p><button class="bo" onclick="go('contact')">상담 신청</button></div>
+  </div>
+</div></div>
+
+<!-- AI -->
+<div id="page-ai" class="pg"><div class="pi" style="max-width:660px">
+  <p class="stag">AI 체험</p><h2 class="stit">AI 문장 생성</h2><span class="gr"></span>
+  <div style="display:flex;align-items:center;gap:9px;margin-bottom:18px;padding:11px 14px;background:var(--bg1);border-radius:var(--r);border:.5px solid var(--bdr)">
+    <span style="font-size:11px;color:var(--c3)">무료 사용 횟수</span>
+    <div style="display:flex;gap:5px" id="udots">
+      <div style="width:9px;height:9px;border-radius:50%;background:var(--blue2)"></div>
+      <div style="width:9px;height:9px;border-radius:50%;background:var(--blue2)"></div>
+      <div style="width:9px;height:9px;border-radius:50%;background:var(--blue2)"></div>
+    </div>
+    <span style="font-size:11px;color:var(--c2);margin-left:3px" id="utxt">3회 남음</span>
+    <button class="bg" style="margin-left:auto;padding:5px 13px;font-size:10px" onclick="go('pricing')">업그레이드</button>
+  </div>
+  <div class="abox">
+    <label class="albl">키워드 입력</label>
+    <textarea class="ain" id="akw" rows="2" placeholder="예: 병원, 예약, 확인 / 도움, 감사, 인사"></textarea>
+    <label class="albl" style="margin-top:12px">문장 유형</label>
+    <div class="atbs">
+      <button class="atb on" id="atp" onclick="setAT('positive')">👍 긍정</button>
+      <button class="atb" id="atn" onclick="setAT('negative')">👎 부정/요청</button>
+      <button class="atb" id="atf" onclick="setAT('formal')">📋 공식/행정</button>
+      <button class="atb" id="atd" onclick="setAT('daily')">💬 일상 대화</button>
+    </div>
+    <button class="agen" id="agenbtn" onclick="genS()">✨ 문장 생성하기</button>
+  </div>
+  <div class="ares" id="ares">
+    <div style="font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--c3);margin-bottom:11px">생성된 문장 — 클릭하여 복사</div>
+    <div id="aout"></div>
+    <p style="font-size:10px;color:var(--c3);margin-top:9px;text-align:center">💡 클릭하면 클립보드에 복사됩니다</p>
+  </div>
+  <div id="alimit" style="display:none;margin-top:12px;background:rgba(200,168,75,.07);border:1px solid rgba(200,168,75,.28);border-radius:var(--r);padding:20px;text-align:center">
+    <div style="font-size:28px;margin-bottom:7px">🔒</div>
+    <h3 style="font:400 16px/1 var(--sf);color:var(--c);margin-bottom:7px">무료 횟수를 모두 사용했습니다</h3>
+    <p style="font-size:12px;color:var(--c2);margin-bottom:16px">계속 이용하려면 구독 또는 건당 결제를 선택해주세요.</p>
+    <div style="display:flex;gap:7px;justify-content:center;flex-wrap:wrap"><button class="bg" onclick="go('pricing')">요금제 보기</button><button class="bo" onclick="go('contact')">상담 신청</button></div>
+  </div>
+</div></div>
+
+<!-- WRITING -->
+<div id="page-writing" class="pg"><div class="pi">
+  <p class="stag">글쓰기 도우미</p><h2 class="stit">농인을 위한 AI 글쓰기</h2><span class="gr"></span>
+  <p style="font-size:13px;line-height:1.8;color:var(--c2);max-width:520px;margin-bottom:16px">육하원칙을 입력하면 AI가 자연스러운 문장으로 완성합니다.</p>
+  <div class="wgrid">
+    <div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;flex-wrap:wrap;gap:7px">
+        <div style="display:flex;align-items:center;gap:9px">
+          <select id="wfsz" onchange="document.getElementById('wedit').style.fontSize=this.value" style="background:var(--bg1);border:.5px solid var(--bdr);border-radius:6px;padding:5px 8px;font-size:11px;color:var(--c);outline:none;cursor:pointer">
+            <option value="13px">10pt</option><option value="14.7px">11pt</option><option value="16px" selected>12pt</option><option value="18.7px">14pt</option><option value="21.3px">16pt</option>
+          </select>
+          <span style="font-size:11px;color:var(--c3)" id="wcnt">0 글자</span>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button onclick="loadWSample()" style="font-size:11px;padding:5px 10px;border-radius:7px;border:.5px solid var(--bdr);background:transparent;color:var(--c3);cursor:pointer">📋 예시</button>
+          <button onclick="copyWAll()" style="font-size:11px;padding:5px 10px;border-radius:7px;border:.5px solid var(--bdr);background:transparent;color:var(--c3);cursor:pointer">📋 복사</button>
+        </div>
+      </div>
+      <div id="wedit" class="wedit" contenteditable="true" spellcheck="false" oninput="syncW()" onpaste="wPaste(event)" oncopy="wCopy(event)" style="font-size:16px;font-family:'Malgun Gothic','Apple SD Gothic Neo',var(--ss)"></div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;justify-content:flex-end">
+        <button class="wab pos" id="wbpos" onclick="wAuto('positive')" disabled>✨ 긍정으로 완성</button>
+        <button class="wab neg" id="wbneg" onclick="wAuto('negative')" disabled>✨ 부정으로 완성</button>
+      </div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;margin-top:7px;align-items:center">
+        <span style="font-size:10px;color:var(--c3)">단계별:</span>
+        <button class="wsb" style="background:#7c3aed" id="wbs0" onclick="wAnalyze('ai_expand')" disabled>AI 지원</button>
+        <button class="wsb" style="background:#059669" id="wbs1" onclick="wAnalyze('positive')" disabled>긍정</button>
+        <button class="wsb" style="background:#dc2626" id="wbs2" onclick="wAnalyze('negative')" disabled>부정</button>
+        <button class="wsb" style="background:#d97706" id="wbs3" onclick="wAnalyze('spelling')" disabled>맞춤법</button>
+        <button class="wsb" style="background:#0d9488" id="wbs4" onclick="wAnalyze('grammar')" disabled>문법</button>
+        <button class="wsb" style="background:#2563eb" id="wbs5" onclick="wAnalyze('all')" disabled>종합</button>
+      </div>
+      <div id="wmsg" class="wmsg"></div>
+    </div>
+    <div>
+      <h3 style="font:400 16px/1 var(--sf);color:var(--c);margin-bottom:12px">제안사항</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px" id="wcats">
+        <button class="wcb on" style="background:rgba(100,116,139,.5)" onclick="setWCat('all',this)">전체</button>
+        <button class="wcb" data-c="rgba(37,99,235,.5)" onclick="setWCat('style',this)">스타일</button>
+        <button class="wcb" data-c="rgba(99,102,241,.5)" onclick="setWCat('clarity',this)">명료성</button>
+        <button class="wcb" data-c="rgba(217,119,6,.5)" onclick="setWCat('spelling',this)">맞춤법</button>
+        <button class="wcb" data-c="rgba(13,148,136,.5)" onclick="setWCat('grammar',this)">문법</button>
+        <button class="wcb" data-c="rgba(220,38,38,.5)" onclick="setWCat('punctuation',this)">문장부호</button>
+      </div>
+      <div id="wslist" style="max-height:320px;overflow-y:auto"><div style="text-align:center;padding:32px;font-size:12px;color:var(--c3)">종합 검토를 클릭하여<br>제안사항을 확인하세요</div></div>
+      <div id="wapply" style="display:none;margin-top:12px;border-top:.5px solid var(--bdr);padding-top:12px"><button class="bb" style="width:100%" onclick="wApplyAll()">모든 제안 적용</button></div>
+    </div>
+  </div>
+</div></div>
+
+<!-- COMMUNITY -->
+<div id="page-community" class="pg"><div class="pi">
+  <p class="stag">커뮤니티</p><h2 class="stit">수어로 연결되는 공간</h2><span class="gr"></span>
+  <div class="upzone" onclick="alert('로그인 후 영상을 업로드할 수 있습니다.')"><div style="font-size:40px;margin-bottom:9px">📹</div><p style="font-size:14px;color:var(--c);margin-bottom:6px">수어 영상 업로드</p><p style="font-size:12px;color:var(--c3)">클릭하거나 파일을 드래그하세요 · MP4, MOV · 최대 100MB</p></div>
+  <div class="cmgrid">
+    <div class="cmpost"><div class="cmth" style="background:linear-gradient(135deg,#1a2e50,#0a4a7a)">🤟<div class="cmpl">▶</div></div><div class="cminf"><div class="cmtit">병원 예약 시 꼭 필요한 수어 표현 5가지</div><div class="cmmeta">김지수 · 2일 전 · 1,240회</div><span class="cmtag">의료</span><span class="cmtag">실용</span></div></div>
+    <div class="cmpost"><div class="cmth" style="background:linear-gradient(135deg,#1a3a28,#0a4a30)">✋<div class="cmpl">▶</div></div><div class="cminf"><div class="cmtit">직장에서 자주 쓰는 수어 표현 모음</div><div class="cmmeta">박민준 · 4일 전 · 876회</div><span class="cmtag">직장</span></div></div>
+    <div class="cmpost"><div class="cmth" style="background:linear-gradient(135deg,#3a1a50,#5a0a6a)">👋<div class="cmpl">▶</div></div><div class="cminf"><div class="cmtit">AI 아바타 기능 활용 튜토리얼</div><div class="cmmeta">아쿠아팀 · 1주 전 · 3,450회</div><span class="cmtag">AI</span></div></div>
+    <div class="cmpost"><div class="cmth" style="background:linear-gradient(135deg,#3a2a10,#5a4a0a)">🙏<div class="cmpl">▶</div></div><div class="cminf"><div class="cmtit">민원 신청할 때 알아두면 좋은 수어</div><div class="cmmeta">이수현 · 1주 전 · 654회</div><span class="cmtag">행정</span></div></div>
+  </div>
+</div></div>
+
+<!-- ACCOUNTING -->
+<div id="page-accounting" class="pg"><div class="pi">
+  <p class="stag">비영리 회계</p><h2 class="stit">비영리단체 회계 검토 프로그램</h2><span class="gr"></span>
+  <p style="font-size:13px;line-height:1.8;color:var(--c2);max-width:540px;margin-bottom:16px">세입지출내역과 결산표를 엑셀로 작성 후 업로드하면 불일치 항목을 자동 탐지합니다.</p>
+  <div class="accsteps">
+    <div class="acard ac1">
+      <div class="acnum">1</div>
+      <h3 style="font:400 15px/1 var(--sf);color:var(--c);margin-bottom:8px">양식 다운로드 후 작성</h3>
+      <p style="font-size:12px;line-height:1.75;color:var(--c3);margin-bottom:14px">표준 양식을 다운로드해서 파란 셀에만 금액을 입력하세요. 소계·합계·차액은 자동 계산됩니다.</p>
+      <button class="acdlb" onclick="buildTemplate()">⬇ 비영리단체 회계 양식 다운로드</button>
+      <div style="margin-top:12px;font-size:11px;line-height:1.75;color:var(--c3);padding:9px 12px;background:var(--bg);border-radius:7px;border:.5px solid var(--bdr)">📋 <b style="color:var(--c2)">시트 구성</b><br>• 세입지출내역: 회비·사업·보조금·기타수입 / 인건비·운영·사업·경비<br>• 결산표: 항목별 예산·결산·전년도·증감 자동 집계</div>
+    </div>
+    <div class="acard ac2">
+      <div class="acnum">2</div>
+      <h3 style="font:400 15px/1 var(--sf);color:var(--c);margin-bottom:8px">작성 후 업로드 → 검토</h3>
+      <p style="font-size:12px;line-height:1.75;color:var(--c3);margin-bottom:14px">작성한 엑셀 파일을 업로드하면 자동으로 불일치 항목을 찾아드립니다.</p>
+      <div class="acup" id="acup" onclick="document.getElementById('acfi').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="event.preventDefault();this.classList.remove('drag');if(event.dataTransfer.files[0])loadAccF(event.dataTransfer.files[0])">
+        <div style="font-size:30px;margin-bottom:7px">📂</div>
+        <p style="font-size:12px;color:var(--c3)"><strong style="color:var(--blue2)">클릭</strong>하거나 파일을 드래그 앤 드롭<br><span style="font-size:10px;color:var(--c4)">.xlsx 파일만 지원</span></p>
+      </div>
+      <input type="file" id="acfi" accept=".xlsx,.xls" style="display:none" onchange="if(this.files[0])loadAccF(this.files[0])">
+      <div class="acready" id="acready"><span>✅</span><div><span id="acfn" style="font-size:12px;font-weight:600;color:#5acc8a"></span><br><small id="acfi2" style="font-size:10px;color:var(--c3)"></small></div></div>
+      <div class="acpbar" id="acpbar"><div style="height:100%;width:0%;background:linear-gradient(90deg,var(--blue),var(--gr));transition:width .4s;border-radius:3px" id="acpfill"></div></div>
+      <div class="acptxt" id="acptxt"></div>
+      <button class="acsbtn" id="acsbtn" disabled onclick="runAcc()">🔍 검토 시작</button>
+    </div>
+  </div>
+  <div class="acres" id="acres">
+    <div class="acsum">
+      <div class="acsc t"><label>📋 검토 항목</label><div class="val" id="as0">0</div><small style="font-size:10px;color:var(--c3);margin-top:3px;display:block">비교 대상</small></div>
+      <div class="acsc e"><label>🔴 오류</label><div class="val" id="as1">0</div><small style="font-size:10px;color:var(--c3);margin-top:3px;display:block">즉시 수정</small></div>
+      <div class="acsc w"><label>🟡 주의</label><div class="val" id="as2">0</div><small style="font-size:10px;color:var(--c3);margin-top:3px;display:block">확인 권장</small></div>
+      <div class="acsc o"><label>✅ 일치</label><div class="val" id="as3">0</div><small style="font-size:10px;color:var(--c3);margin-top:3px;display:block">정상</small></div>
+    </div>
+    <div class="allok" id="allok"><div style="font-size:44px;margin-bottom:9px">🎉</div><h3 style="font:400 18px/1 var(--sf);color:var(--gr);margin-bottom:6px">모든 항목이 일치합니다!</h3><p style="font-size:12px;color:var(--gr)">불일치 항목이 없습니다.</p></div>
+    <div id="actabarea">
+      <div class="actabs">
+        <button class="actab on" data-t="issues">🚨 문제점 <span id="acicnt" style="background:rgba(232,80,80,.2);color:var(--rd);font-size:9px;padding:1px 5px;border-radius:8px;margin-left:2px"></span></button>
+        <button class="actab" data-t="inc">📋 세입지출</button>
+        <button class="actab" data-t="setl">📑 결산표</button>
+        <button class="actab" data-t="cmp">⚖️ 비교 대사</button>
+      </div>
+      <div class="atpanel on" id="atp-issues"><div id="ailist"></div></div>
+      <div class="atpanel" id="atp-inc"><div style="background:var(--bg1);border-radius:var(--r);border:.5px solid var(--bdr);overflow:hidden"><div style="padding:10px 14px;border-bottom:.5px solid var(--bdr);display:flex;align-items:center;justify-content:space-between"><h4 style="font-size:13px;font-weight:700;color:var(--c)">세입지출내역</h4><span id="acincr" style="padding:2px 8px;border-radius:16px;font-size:10px;font-weight:700;font-family:monospace;background:rgba(58,106,216,.15);color:var(--blue2)"></span></div><div class="tscroll"><table id="acinct"></table></div></div></div>
+      <div class="atpanel" id="atp-setl"><div style="background:var(--bg1);border-radius:var(--r);border:.5px solid var(--bdr);overflow:hidden"><div style="padding:10px 14px;border-bottom:.5px solid var(--bdr);display:flex;align-items:center;justify-content:space-between"><h4 style="font-size:13px;font-weight:700;color:var(--c)">결산표</h4><span id="acsetlr" style="padding:2px 8px;border-radius:16px;font-size:10px;font-weight:700;font-family:monospace;background:rgba(58,106,216,.15);color:var(--blue2)"></span></div><div class="tscroll"><table id="acsetlt"></table></div></div></div>
+      <div class="atpanel" id="atp-cmp"></div>
+    </div>
+  </div>
+</div></div>
+
+<!-- PRICING -->
+<div id="page-pricing" class="pg"><div class="pi">
+  <p class="stag">요금제</p><h2 class="stit">나에게 맞는 요금제</h2><span class="gr"></span>
+  <div class="pgrid">
+    <div class="pcard"><div class="pname">무료</div><div class="pprice">₩0<span> / 월</span></div><ul class="pfeat"><li>AI 문장 생성 3회/월</li><li>글쓰기 도우미 무제한</li><li>비영리 회계 프로그램</li><li>커뮤니티 무제한</li><li class="off">수어 영상 변환</li><li class="off">행정 문서 생성</li></ul><button class="bo" style="width:100%" onclick="go('ai')">무료 체험 시작</button></div>
+    <div class="pcard feat"><div class="pbdg">가장 인기</div><div class="pname">스탠다드</div><div class="pprice">₩9,900<span> / 월</span></div><ul class="pfeat"><li>AI 문장 생성 무제한</li><li>글쓰기 도우미 무제한</li><li>수어 영상 변환 월 10회</li><li>행정 문서 생성 월 5회</li><li>AI 아바타 기본</li><li class="off">B2B 기관 기능</li></ul><button class="bg" style="width:100%" onclick="alert('결제 시스템 연동 준비 중입니다.')">스탠다드 시작</button></div>
+    <div class="pcard"><div class="pname">프로</div><div class="pprice">₩29,900<span> / 월</span></div><ul class="pfeat"><li>AI 문장 생성 무제한</li><li>수어 영상 변환 무제한</li><li>행정 문서 무제한</li><li>AI 아바타 고급 기능</li><li>우선 지원 24/7</li><li>B2B + API 연동</li></ul><button class="bb" style="width:100%" onclick="go('contact')">도입 상담</button></div>
+  </div>
+</div></div>
+
+<!-- CONTACT -->
+<div id="page-contact" class="pg"><div class="pi">
+  <p class="stag">문의 / 상담</p><h2 class="stit">함께 시작하겠습니다</h2><span class="gr"></span>
+  <div class="ctgrid">
+    <div>
+      <h3 style="font:400 18px/1.2 var(--sf);color:var(--c);margin-bottom:12px">아쿠아브릿지와 연결하세요</h3>
+      <p style="font-size:13px;line-height:1.8;color:var(--c2);margin-bottom:16px">청각장애인과 청인이 더 자유롭게 소통하는 세상을 만들어가고 있습니다.</p>
+      <div class="ctlinks">
+        <div class="ctlink"><div class="ctlico">📧</div><span>contact@aquabridge.kr</span></div>
+        <div class="ctlink"><div class="ctlico">📞</div><span>02-1234-5678 (평일 9–18시)</span></div>
+        <div class="ctlink"><div class="ctlico">💬</div><span>카카오톡: @아쿠아브릿지</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="fld"><label class="flbl">이름</label><input class="fin" type="text" id="cn" placeholder="성함 또는 브랜드명"></div>
+      <div class="fld"><label class="flbl">이메일</label><input class="fin" type="email" id="ce" placeholder="이메일 주소"></div>
+      <div class="fld"><label class="flbl">문의 유형</label><div class="ftypes"><button class="ftb on" onclick="selFT(this)">서비스 이용</button><button class="ftb" onclick="selFT(this)">기관 도입</button><button class="ftb" onclick="selFT(this)">기술 문의</button><button class="ftb" onclick="selFT(this)">제휴/파트너</button></div></div>
+      <div class="fld"><label class="flbl">메시지</label><textarea class="fin" id="cm" placeholder="문의 내용을 자유롭게 작성해주세요"></textarea></div>
+      <button class="bg" style="width:100%" onclick="submitCt()">문의 보내기 →</button>
+    </div>
+  </div>
+</div></div>
+
+</div><!-- /stage -->
+</div><!-- /app -->
+
+<script>
+// ── INTRO ──
+var iSkipped=false;
+function startIntro(){
+  // 150ms 후 로고·텍스트 동시 fade in
+  setTimeout(function(){
+    var iw=document.getElementById('iw');
+    var in_=document.getElementById('iname'),is=document.getElementById('isub');
+    if(iw)iw.classList.add('v');
+    if(in_)in_.classList.add('v');
+    if(is)is.classList.add('v');
+  },150);
+  // 2.8초 정적 유지 후 자동 fade out
+  setTimeout(function(){
+    if(!iSkipped)skipIntro();
+  },2800);
+}
+function skipIntro(){
+  if(iSkipped)return;
+  iSkipped=true;
+  var el=document.getElementById('intro');
+  if(el){
+    el.classList.add('out');
+    setTimeout(function(){el.style.display='none';launchApp();},900);
+  }
+}
+function launchApp(){
+  var app=document.getElementById('app');
+  if(app)app.classList.add('v');
+  showPage('home');
+}
+window.onload=function(){startIntro();};
+
+// ── NAVIGATION ──
+var curPage='home';
+function go(id){
+  if(id===curPage)return;
+  var old=document.getElementById('page-'+curPage);
+  if(old)old.classList.remove('v');
+  showPage(id);
+  curPage=id;
+  document.querySelectorAll('.nl a').forEach(function(a){
+    var oc=a.getAttribute('onclick')||'';
+    a.classList.toggle('on',oc.indexOf("'"+id+"'")>=0);
+  });
+}
+function showPage(id){
+  var p=document.getElementById('page-'+id);
+  if(p){p.classList.add('v');p.scrollTop=0;}
+}
+function toggleM(){
+  document.getElementById('mdrw').classList.toggle('v');
+  document.getElementById('mback').classList.toggle('v');
+  document.getElementById('hbg').classList.toggle('v');
+}
+function closeM(){
+  document.getElementById('mdrw').classList.remove('v');
+  document.getElementById('mback').classList.remove('v');
+  document.getElementById('hbg').classList.remove('v');
+}
+
+// ── AI PAGE ──
+var aiUse=3, aiType='positive';
+function setAT(t){
+  aiType=t;
+  var m={positive:'atp',negative:'atn',formal:'atf',daily:'atd'};
+  ['atp','atn','atf','atd'].forEach(function(k){var el=document.getElementById(k);if(el)el.classList.remove('on');});
+  if(m[t]){var el=document.getElementById(m[t]);if(el)el.classList.add('on');}
+}
+function updAiUse(){
+  var dots=document.getElementById('udots').children;
+  for(var i=0;i<3;i++)dots[i].style.background=i<aiUse?'var(--blue2)':'rgba(255,255,255,.12)';
+  document.getElementById('utxt').textContent=aiUse+'회 남음';
+}
+async function genS(){
+  if(aiUse<=0){document.getElementById('alimit').style.display='block';return;}
+  var kw=document.getElementById('akw').value.trim();
+  if(!kw){alert('키워드를 입력해주세요.');return;}
+  var btn=document.getElementById('agenbtn');
+  btn.disabled=true;btn.textContent='⏳ 생성 중...';
+  document.getElementById('ares').classList.remove('v');
+  document.getElementById('alimit').style.display='none';
+  var lbl={positive:'긍정',negative:'부정/요청',formal:'공식/행정',daily:'일상 대화'};
+  try{
+    var res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:500,
+        messages:[{role:"user",content:'키워드: "'+kw+'"\n유형: '+(lbl[aiType]||'긍정')+'\n자연스러운 한국어 문장 3개 생성\nJSON만: {"s":["문장1","문장2","문장3"]}'}]})
+    });
+    var d=await res.json();
+    var raw=d.content[0].text;
+    var m2=raw.match(/\{[\s\S]*\}/);
+    if(!m2)throw new Error('no json');
+    var p=JSON.parse(m2[0]);
+    var out=document.getElementById('aout');out.innerHTML='';
+    (p.s||[]).forEach(function(s){
+      var e=document.createElement('div');e.className='arow';e.textContent=s;
+      e.onclick=function(){
+        var orig=e.textContent;
+        navigator.clipboard&&navigator.clipboard.writeText(s).then(function(){
+          e.style.background='rgba(58,184,160,.12)';e.textContent='✓ 복사됨  '+orig;
+          setTimeout(function(){e.style.background='';e.textContent=orig;},1400);
+        });
+      };
+      out.appendChild(e);
+    });
+    aiUse--;updAiUse();
+    document.getElementById('ares').classList.add('v');
+    if(aiUse===0)setTimeout(function(){document.getElementById('alimit').style.display='block';},400);
+  }catch(e){
+    document.getElementById('aout').innerHTML='<div class="arow" style="color:var(--rd)">오류가 발생했습니다. 다시 시도해주세요.</div>';
+    document.getElementById('ares').classList.add('v');
+  }finally{
+    btn.disabled=false;btn.textContent='✨ 문장 생성하기';
+  }
+}
+
+// ── WRITING ──
+var WS={text:'',suggs:[],cat:'all',busy:false};
+var CC={style:'rgba(37,99,235,.28)',clarity:'rgba(99,102,241,.28)',spelling:'rgba(217,119,6,.28)',grammar:'rgba(13,148,136,.28)',punctuation:'rgba(220,38,38,.28)'};
+var CB={style:'#2563eb',clarity:'#6366f1',spelling:'#d97706',grammar:'#0d9488',punctuation:'#dc2626'};
+
+function syncW(){
+  var ed=document.getElementById('wedit');
+  var d=document.createElement('div');d.innerHTML=ed.innerHTML;
+  d.querySelectorAll('mark').forEach(function(m){m.parentNode.replaceChild(document.createTextNode(m.textContent),m);});
+  WS.text=d.textContent||'';
+  document.getElementById('wcnt').textContent=WS.text.length+' 글자';
+  var dis=!WS.text.trim();
+  ['wbpos','wbneg'].forEach(function(id){var el=document.getElementById(id);if(el)el.disabled=dis;});
+  ['wbs0','wbs1','wbs2','wbs3','wbs4','wbs5'].forEach(function(id){var el=document.getElementById(id);if(el)el.disabled=dis;});
+}
+function wPaste(e){
+  e.preventDefault();
+  var t=e.clipboardData.getData('text/plain');if(!t)return;
+  var ed=document.getElementById('wedit'),sel=window.getSelection();
+  if(!sel.rangeCount)return;
+  sel.deleteFromDocument();
+  var rng=sel.getRangeAt(0);
+  var html=t.split('\n').map(function(l){return'<div>'+(l||'<br>')+'</div>';}).join('');
+  rng.insertNode(rng.createContextualFragment(html));
+  rng.collapse(false);sel.removeAllRanges();sel.addRange(rng);syncW();
+}
+function wCopy(e){
+  var sel=window.getSelection();if(!sel.rangeCount)return;
+  var d=document.createElement('div');d.appendChild(sel.getRangeAt(0).cloneContents());
+  d.querySelectorAll('mark').forEach(function(m){var s=document.createElement('span');s.innerHTML=m.innerHTML;m.parentNode.replaceChild(s,m);});
+  e.clipboardData.setData('text/plain',d.textContent);e.preventDefault();
+}
+function loadWSample(){
+  var ed=document.getElementById('wedit');
+  ed.innerHTML='<div>1. 누가:</div><div>2. 언제:</div><div>3. 어디서:</div><div>4. 무엇을:</div><div>5. 어떻게:</div><div>6. 왜:</div>';
+  syncW();
+}
+function copyWAll(){
+  var ed=document.getElementById('wedit'),d=document.createElement('div');
+  d.innerHTML=ed.innerHTML;
+  d.querySelectorAll('mark').forEach(function(m){var s=document.createElement('span');s.innerHTML=m.innerHTML;m.parentNode.replaceChild(s,m);});
+  navigator.clipboard&&navigator.clipboard.writeText(d.textContent);
+}
+function setWEd(t){
+  var ed=document.getElementById('wedit');
+  ed.innerHTML='<div>'+t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</div>';
+  syncW();
+}
+function wHL(){
+  var ed=document.getElementById('wedit');
+  var h=ed.innerHTML.replace(/<mark[^>]*>(.*?)<\/mark>/gi,'$1');
+  WS.suggs.filter(function(s){return WS.cat==='all'||s.category===WS.cat;}).forEach(function(s){
+    var col=CC[s.category]||'rgba(100,116,139,.25)';
+    var esc=s.issue.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    var tgt=h.indexOf(esc)>=0?esc:s.issue;
+    if(h.indexOf(tgt)>=0)h=h.replace(tgt,'<mark data-i="'+encodeURIComponent(s.issue)+'" style="background:'+col+';padding:1px 0;border-radius:2px;cursor:pointer">'+tgt+'</mark>');
+  });
+  ed.innerHTML=h;
+}
+function showWMsg(msg,ok){
+  var el=document.getElementById('wmsg');
+  if(!el)return;
+  el.textContent=msg;el.className='wmsg '+(ok?'ok':'er');
+}
+function hideWMsg(){var el=document.getElementById('wmsg');if(el){el.className='wmsg';el.textContent='';}}
+function renderWS(){
+  var list=document.getElementById('wslist');
+  var fil=WS.suggs.filter(function(s){return WS.cat==='all'||s.category===WS.cat;});
+  if(!fil.length){
+    list.innerHTML='<div style="text-align:center;padding:32px;font-size:12px;color:var(--c3)">'+(WS.suggs.length===0?'종합 검토를 클릭하세요':'이 카테고리에 제안사항이 없습니다')+'</div>';
+    document.getElementById('wapply').style.display='none';return;
+  }
+  var html='';
+  fil.forEach(function(s,i){
+    html+='<div class="wsc">';
+    html+='<div class="wscbdg" style="background:'+(CB[s.category]||'#475569')+'">'+s.category+'</div>';
+    html+='<div class="wscdiff"><span class="fr">'+s.issue+'</span><span style="color:var(--c3)">→</span><span class="to">'+s.suggestion+'</span></div>';
+    html+='<div class="wscex">'+(s.explanation||'')+'</div>';
+    html+='<div style="display:flex;gap:5px">';
+    html+='<button style="font-size:10px;padding:3px 9px;border-radius:6px;border:none;background:var(--blue);color:#fff;cursor:pointer" onclick="wApplyOne('+i+')">수락</button>';
+    html+='<button style="font-size:10px;padding:3px 9px;border-radius:6px;border:.5px solid rgba(232,80,80,.3);background:rgba(232,80,80,.12);color:var(--rd);cursor:pointer" onclick="wDismiss('+i+')">무시</button>';
+    html+='</div></div>';
+  });
+  list.innerHTML=html;
+  document.getElementById('wapply').style.display=WS.suggs.length>0?'block':'none';
+}
+function wApplyOne(idx){
+  var fil=WS.suggs.filter(function(s){return WS.cat==='all'||s.category===WS.cat;});
+  var s=fil[idx];if(!s)return;
+  var ed=document.getElementById('wedit');
+  var h=ed.innerHTML.replace(/<mark[^>]*>(.*?)<\/mark>/gi,'$1');
+  var esc=s.issue.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  var tgt=h.indexOf(esc)>=0?esc:s.issue;
+  if(h.indexOf(tgt)>=0)h=h.replace(tgt,s.suggestion.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'));
+  ed.innerHTML=h;syncW();
+  WS.suggs=WS.suggs.filter(function(x){return x!==s;});
+  wHL();renderWS();
+}
+function wDismiss(idx){
+  var fil=WS.suggs.filter(function(s){return WS.cat==='all'||s.category===WS.cat;});
+  var s=fil[idx];if(!s)return;
+  WS.suggs=WS.suggs.filter(function(x){return x!==s;});
+  wHL();renderWS();
+}
+function wApplyAll(){
+  var ed=document.getElementById('wedit');
+  var h=ed.innerHTML.replace(/<mark[^>]*>(.*?)<\/mark>/gi,'$1');
+  WS.suggs.forEach(function(s){
+    var esc=s.issue.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    var tgt=h.indexOf(esc)>=0?esc:s.issue;
+    if(h.indexOf(tgt)>=0)h=h.replace(tgt,s.suggestion.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'));
+  });
+  ed.innerHTML=h;syncW();WS.suggs=[];wHL();renderWS();
+}
+function setWCat(cat,btn){
+  WS.cat=cat;
+  document.querySelectorAll('.wcb').forEach(function(b){b.classList.remove('on');b.style.background='';});
+  btn.classList.add('on');btn.style.background=CB[cat]||'rgba(100,116,139,.5)';
+  wHL();renderWS();
+}
+var WP={
+  spelling:'한국어 맞춤법 전문가. 맞춤법 오류만 찾아주세요.\n"""\n{T}\n"""\n[{"category":"spelling","issue":"잘못","suggestion":"올바른","explanation":"이유"}]\n없으면 []. JSON만.',
+  grammar:'한국어 문법 전문가. 문법 오류만 찾아주세요.\n"""\n{T}\n"""\n[{"category":"grammar","issue":"틀린","suggestion":"올바른","explanation":"이유"}]\n없으면 []. JSON만.',
+  all:'한국어 편집자. 농인을 위해 스타일·명료성·맞춤법·문법을 분석해주세요.\n"""\n{T}\n"""\n[{"category":"style|clarity|spelling|grammar|punctuation","issue":"원본","suggestion":"개선","explanation":"이유"}]\n없으면 []. JSON만.'
+};
+async function callAI(prompt){
+  var r=await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:800,messages:[{role:"user",content:prompt}]})
+  });
+  var d=await r.json();
+  return (d.content||[]).filter(function(i){return i.type==='text';}).map(function(i){return i.text;}).join('').trim();
+}
+function exWh(){
+  var res={};
+  WS.text.split('\n').map(function(l){return l.trim();}).filter(Boolean).forEach(function(l){
+    var m=l.match(/^\d+\.\s*(누가|언제|어디서|무엇을|어떻게|왜)\s*:\s*(.*)/);
+    if(m)res[m[1]]=m[2].trim();
+  });
+  return res;
+}
+function setBusy(b,s){
+  WS.busy=b;
+  var lbl=s||'처리 중...';
+  ['wbpos','wbneg'].forEach(function(id){
+    var btn=document.getElementById(id);if(!btn)return;
+    if(b){btn.disabled=true;btn.textContent=lbl;}
+    else{btn.disabled=!WS.text.trim();btn.textContent=id==='wbpos'?'✨ 긍정으로 완성':'✨ 부정으로 완성';}
+  });
+  ['wbs0','wbs1','wbs2','wbs3','wbs4','wbs5'].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.disabled=b||!WS.text.trim();
+  });
+}
+function slp(ms){return new Promise(function(r){setTimeout(r,ms);});}
+async function wAuto(tone){
+  if(!WS.text.trim()){showWMsg('텍스트를 입력해주세요.');return;}
+  setBusy(true,'처리 중...');hideWMsg();WS.suggs=[];renderWS();
+  try{
+    setBusy(true,'1/5 AI 지원 중...');
+    var wh=exWh(),filled=Object.entries(wh).filter(function(e){return e[1];}).map(function(e){return e[0]+': '+e[1];}).join(', ');
+    if(!filled){showWMsg('육하원칙 항목에 내용을 입력해주세요.');setBusy(false);return;}
+    var s=await callAI('다음 육하원칙 정보를 자연스러운 한국어 문장 1개로 만들어주세요.\n정보: '+filled+'\n문장만 출력하세요.');
+    setWEd(s);await slp(350);
+    setBusy(true,'2/5 어조 변환 중...');
+    s=await callAI('다음 문장을 '+(tone==='positive'?'긍정적이고 희망적인':'부정적이고 비판적인')+' 표현으로 바꿔주세요.\n문장: '+s+'\n바꾼 문장만 출력하세요.');
+    setWEd(s);await slp(350);
+    setBusy(true,'3/5 맞춤법 검사 중...');
+    s=await callAI('다음 문장의 맞춤법을 검사하고 오류가 있으면 수정해주세요.\n문장: '+s+'\n수정된 문장만 출력하세요.');
+    setWEd(s);await slp(350);
+    setBusy(true,'4/5 문법 검사 중...');
+    s=await callAI('다음 문장의 문법을 검사하고 어색한 표현을 수정해주세요.\n문장: '+s+'\n수정된 문장만 출력하세요.');
+    setWEd(s);await slp(350);
+    setBusy(true,'5/5 최종 검토 중...');
+    s=await callAI('다음 문장을 농인이 이해하기 쉽게 최종 점검해주세요.\n문장: '+s+'\n완성된 문장만 출력하세요.');
+    setWEd(s);showWMsg('✨ 완성되었습니다!',true);
+  }catch(e){showWMsg('오류가 발생했습니다. 다시 시도해주세요.');}
+  finally{setBusy(false);}
+}
+async function wAnalyze(type){
+  if(!WS.text.trim()){showWMsg('텍스트를 입력해주세요.');return;}
+  var ed=document.getElementById('wedit');
+  ed.innerHTML=ed.innerHTML.replace(/<mark[^>]*>(.*?)<\/mark>/gi,'$1');syncW();
+  setBusy(true,'분석 중...');hideWMsg();WS.suggs=[];
+  try{
+    if(type==='ai_expand'){
+      var wh=exWh(),f=Object.entries(wh).filter(function(e){return e[1];}).map(function(e){return e[0]+': '+e[1];}).join(', ');
+      if(!f){showWMsg('육하원칙 항목을 입력해주세요.');setBusy(false);return;}
+      setWEd(await callAI('다음 육하원칙 정보를 자연스러운 한국어 문장 1개로 만들어주세요.\n정보: '+f+'\n문장만 출력하세요.'));
+      setBusy(false);return;
+    }
+    if(type==='positive'||type==='negative'){
+      setWEd(await callAI('다음 문장을 '+(type==='positive'?'긍정적이고 희망적인':'부정적이고 비판적인')+' 표현으로 바꿔주세요.\n문장: '+WS.text.trim()+'\n바꾼 문장만 출력하세요.'));
+      setBusy(false);return;
+    }
+    var raw=await callAI(WP[type].replace('{T}',WS.text));
+    raw=raw.replace(/^```json\s*/i,'').replace(/^```\s*/i,'').replace(/\s*```$/i,'').trim();
+    var parsed=JSON.parse(raw);
+    if(!Array.isArray(parsed))throw new Error('not array');
+    WS.suggs=parsed;wHL();renderWS();
+    if(!parsed.length){var ok={spelling:'맞춤법 오류 없음 ✨',grammar:'문법이 완벽합니다 ✨',all:'개선할 부분이 없습니다 ✨'};showWMsg(ok[type]||'분석 완료',true);}
+  }catch(e){showWMsg(e instanceof SyntaxError?'제안사항 처리 실패. 다시 시도해주세요.':'분석 실패. 다시 시도해주세요.');}
+  finally{setBusy(false);}
+}
+document.addEventListener('click',function(e){
+  if(e.target.tagName==='MARK'){
+    var iss=decodeURIComponent(e.target.getAttribute('data-i')||'');
+    var s=WS.suggs.find(function(x){return x.issue===iss;});
+    if(!s)return;
+    if(confirm('"'+s.issue+'" → "'+s.suggestion+'"\n\n'+(s.explanation||'')+'\n\n수락하시겠습니까?')){
+      var fil=WS.suggs.filter(function(x){return WS.cat==='all'||x.category===WS.cat;});
+      var idx=fil.indexOf(s);
+      if(idx>=0)wApplyOne(idx);
+    }
+    e.stopPropagation();
+  }
+});
+
+// ── ACCOUNTING ──
+var accWB=null;
+function loadAccF(f){
+  var rd=new FileReader();
+  rd.onload=function(e){
+    accWB=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+    document.getElementById('acfn').textContent=f.name;
+    document.getElementById('acfi2').textContent=(f.size/1024).toFixed(1)+' KB · 시트 '+accWB.SheetNames.length+'개';
+    document.getElementById('acready').classList.add('v');
+    document.getElementById('acsbtn').disabled=false;
+  };
+  rd.readAsArrayBuffer(f);
+}
+function setAccP(show,txt,pct){
+  document.getElementById('acpbar').classList.toggle('v',show);
+  var pt=document.getElementById('acptxt');pt.classList.toggle('v',show&&!!txt);pt.textContent=txt||'';
+  document.getElementById('acpfill').style.width=(show?pct:100)+'%';
+  var btn=document.getElementById('acsbtn');btn.disabled=show;btn.innerHTML=show?'⏳ 분석 중...':'🔍 검토 시작';
+  if(!show)setTimeout(function(){document.getElementById('acpfill').style.width='0%';document.getElementById('acpbar').classList.remove('v');},600);
+}
+async function runAcc(){
+  if(!accWB)return;
+  setAccP(true,'시트 읽는 중...',25);await slp(150);
+  setAccP(true,'분석 중...',60);await slp(150);
+  var sheets=accWB.SheetNames;
+  function findS(kws){for(var i=0;i<kws.length;i++){var f=sheets.find(function(s){return s.indexOf(kws[i])>=0;});if(f)return f;}return sheets[0];}
+  var iN=findS(['세입지출','세입','내역']),sN=findS(['결산표','결산','정산']);
+  var iD=parseS(accWB.Sheets[iN]),sD=parseS(accWB.Sheets[sN===iN&&sheets.length>1?sheets[1]:sN]);
+  setAccP(true,'비교 중...',85);await slp(150);
+  var res=analyzeAcc(iD,sD,iN,sN);
+  setAccP(true,'리포트 생성 중...',96);await slp(150);
+  renderAccAll(res,iD,sD,iN,sN);setAccP(false);
+}
+function parseS(ws){
+  var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+  if(!rows.length)return{headers:[],rows:[]};
+  var hi=0;
+  for(var i=0;i<Math.min(6,rows.length);i++){if(rows[i].filter(function(x){return x!=='';}).length>=3){hi=i;break;}}
+  return{headers:rows[hi].map(function(h,i){return h!==''?String(h):'열'+(i+1);}),rows:rows.slice(hi+1).filter(function(r){return r.some(function(x){return x!=='';});})};
+}
+function gC(data,kws){for(var i=0;i<kws.length;i++){var idx=data.headers.findIndex(function(h){return String(h).indexOf(kws[i])>=0;});if(idx>=0)return idx;}return-1;}
+function findT(data){
+  var res={};
+  data.rows.forEach(function(row){
+    var txt=row.map(function(x){return String(x||'');}).join(' ');
+    ['세입 합계','지출 합계','세입합계','지출합계','회비수입 소계','사업수익 소계','보조금수입 소계','기타수입 소계','인건비 소계','운영비 소계','사업비 소계','기타경비 소계','회비수입 합계','사업수익 합계','보조금수입 합계','기타수입 합계','인건비 합계','운영비 합계','사업비 합계','기타경비 합계','차액'].forEach(function(lbl){
+      if(txt.indexOf(lbl)>=0){
+        var v={};
+        data.headers.forEach(function(h,ci){var n=parseFloat(String(row[ci]||'').replace(/,/g,''));if(!isNaN(n))v[ci]=n;});
+        if(Object.keys(v).length)res[lbl]={vals:v};
+      }
+    });
+  });
+  return res;
+}
+function analyzeAcc(inc,setl,iN,sN){
+  var iT=findT(inc),sT=findT(setl);
+  var iBud=gC(inc,['예산']),iAct=gC(inc,['결산액','결산']),sBud=gC(setl,['예산']),sAct=gC(setl,['결산액','결산']);
+  var maps=[
+    {iK:'세입 합계',sK:'세입 합계',lbl:'세입 합계'},{iK:'지출 합계',sK:'지출 합계',lbl:'지출 합계'},
+    {iK:'차액',sK:'차액',lbl:'차액'},{iK:'회비수입 소계',sK:'회비수입 합계',lbl:'회비수입'},
+    {iK:'사업수익 소계',sK:'사업수익 합계',lbl:'사업수익'},{iK:'보조금수입 소계',sK:'보조금수입 합계',lbl:'보조금수입'},
+    {iK:'기타수입 소계',sK:'기타수입 합계',lbl:'기타수입'},{iK:'인건비 소계',sK:'인건비 합계',lbl:'인건비'},
+    {iK:'운영비 소계',sK:'운영비 합계',lbl:'운영비'},{iK:'사업비 소계',sK:'사업비 합계',lbl:'사업비'},
+    {iK:'기타경비 소계',sK:'기타경비 합계',lbl:'기타경비'}
+  ];
+  var issues=[],checked=0,errs=0,warns=0,oks=0;
+  maps.forEach(function(m){
+    var ir=iT[m.iK]||iT[m.iK.replace(' 소계',' 합계')]||iT[m.iK.replace(' 합계',' 소계')];
+    var sr=sT[m.sK]||sT[m.sK.replace(' 합계',' 소계')];
+    if(!ir||!sr)return;
+    [{ic:iAct,sc:sAct,nm:'결산액'},{ic:iBud,sc:sBud,nm:'예산액'}].forEach(function(p){
+      if(p.ic<0||p.sc<0)return;
+      var iv=ir.vals[p.ic]||0,sv=sr.vals[p.sc]||0;
+      var diff=Math.round((iv-sv)*100)/100;
+      var pct=Math.abs(diff)/Math.max(Math.abs(iv),Math.abs(sv),1)*100;
+      checked++;
+      if(Math.abs(diff)<1){oks++;issues.push({t:'g',lbl:m.lbl+' ('+p.nm+')',iv:iv,sv:sv,diff:diff,pct:pct,iN:iN,sN:sN,isOk:true});}
+      else{(pct>5||Math.abs(diff)>10000)?errs++:warns++;issues.push({t:pct>5||Math.abs(diff)>10000?'c':'w',lbl:m.lbl+' ('+p.nm+')',iv:iv,sv:sv,diff:diff,pct:pct,iN:iN,sN:sN});}
+    });
+  });
+  return{issues:issues,checked:checked,errs:errs,warns:warns,oks:oks,iAct:iAct,sAct:sAct,iBud:iBud,sBud:sBud};
+}
+var afmt=function(n){return n==null?'-':Math.round(n).toLocaleString('ko-KR');};
+function renderAccAll(res,iD,sD,iN,sN){
+  [res.checked,res.errs,res.warns,res.oks].forEach(function(v,i){document.getElementById('as'+i).textContent=v||0;});
+  document.getElementById('acres').classList.add('v');
+  var bad=res.issues.filter(function(i){return!i.isOk;});
+  document.getElementById('acicnt').textContent=bad.length;
+  document.getElementById('allok').classList.toggle('v',bad.length===0);
+  document.getElementById('actabarea').style.display=bad.length===0?'none':'block';
+  renderAccI(res.issues);renderAccT('acinct','acincr',iD,iN);renderAccT('acsetlt','acsetlr',sD,sN);renderAccCmp(res,iD,sD);
+  document.getElementById('acres').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function renderAccI(issues){
+  var list=document.getElementById('ailist');list.innerHTML='';
+  if(!issues.length){list.innerHTML='<div style="text-align:center;padding:32px;color:var(--c3);font-size:12px">분석할 항목이 없습니다</div>';return;}
+  var ord={c:0,w:1,g:2};
+  var sorted=issues.slice().sort(function(a,b){return(ord[a.t]||9)-(ord[b.t]||9);});
+  sorted.forEach(function(iss){
+    var d=document.createElement('div');d.className='aicard '+iss.t;
+    var ico=iss.isOk?'✅':iss.t==='c'?'🔴':'🟡';
+    var tit=iss.isOk?'일치: '+iss.lbl:(iss.t==='c'?'오류: ':'주의: ')+iss.lbl+' 불일치';
+    var dtl=iss.isOk?'세입지출: <span class="ok">'+afmt(iss.iv)+'</span> | 결산표: <span class="ok">'+afmt(iss.sv)+'</span>':'세입지출: <span class="v2">'+afmt(iss.iv)+'</span> | 결산표: <span class="v2">'+afmt(iss.sv)+'</span> | 차이: <span class="bd">'+(iss.diff>0?'+':'')+afmt(iss.diff)+'</span> ('+iss.pct.toFixed(1)+'%)';
+    var sug=iss.isOk?'정상입니다.':'차이 '+afmt(Math.abs(iss.diff))+' — 누락·중복 입력 여부를 점검하세요.';
+    d.innerHTML='<div class="aiico">'+ico+'</div><div><div class="aitit">'+tit+'</div><div class="aidtl">'+dtl+'</div><div class="aisg"><span class="si">💡</span><span>'+sug+'</span></div></div>';
+    list.appendChild(d);
+  });
+}
+function renderAccT(tid,rid,data,name){
+  var tbl=document.getElementById(tid);
+  document.getElementById(rid).textContent=data.rows.length+'행';
+  tbl.innerHTML='';
+  if(!data.headers.length){tbl.innerHTML='<tr><td style="padding:18px;text-align:center;color:var(--c3)">데이터 없음</td></tr>';return;}
+  var th=tbl.createTHead(),hr=th.insertRow();
+  data.headers.forEach(function(h){var t=document.createElement('th');t.textContent=h;hr.appendChild(t);});
+  var tb=tbl.createTBody();
+  data.rows.slice(0,100).forEach(function(row){
+    var tr=tb.insertRow();
+    data.headers.forEach(function(h,i){
+      var td=tr.insertCell();var raw=row[i]||'';
+      var n=parseFloat(String(raw).replace(/,/g,''));
+      if(!isNaN(n)&&raw!==''){td.className='n';td.textContent=afmt(n);}
+      else{td.textContent=String(raw);}
+      if(['합계','소계','차액'].some(function(k){return String(raw).indexOf(k)>=0;}))td.classList.add('tds');
+    });
+  });
+}
+function renderAccCmp(res,iD,sD){
+  var p=document.getElementById('atp-cmp');
+  function extr(data,cols){
+    var r=[];
+    data.rows.forEach(function(row){
+      var txt=row.map(function(x){return String(x||'');}).join('');
+      var ml=['세입 합계','지출 합계','차액','회비수입','사업수익','보조금수입','기타수입','인건비','운영비','사업비','기타경비'].find(function(l){return txt.indexOf(l)>=0;});
+      if(ml){var rw={label:ml};cols.forEach(function(ci){var v=parseFloat(String(row[ci]||'').replace(/,/g,''));rw[ci]=isNaN(v)?null:v;});r.push(rw);}
+    });
+    return r;
+  }
+  var ir=extr(iD,[res.iBud,res.iAct].filter(function(x){return x>=0;}));
+  var sr=extr(sD,[res.sBud,res.sAct].filter(function(x){return x>=0;}));
+  var lbls=[];ir.forEach(function(r){if(lbls.indexOf(r.label)<0)lbls.push(r.label);});sr.forEach(function(r){if(lbls.indexOf(r.label)<0)lbls.push(r.label);});
+  var h='<div style="background:var(--bg1);border-radius:var(--r);border:.5px solid var(--bdr);overflow:hidden"><div style="padding:10px 14px;border-bottom:.5px solid var(--bdr)"><h4 style="font-size:13px;font-weight:700;color:var(--c)">비교 대사표</h4></div><div class="tscroll"><table><thead><tr><th>항목</th><th>세입지출 예산</th><th>결산표 예산</th><th>예산 차이</th><th>세입지출 결산</th><th>결산표 결산</th><th>결산 차이</th><th>상태</th></tr></thead><tbody>';
+  lbls.forEach(function(lbl){
+    var iv=ir.find(function(r){return r.label===lbl;}),sv=sr.find(function(r){return r.label===lbl;});
+    var ib=iv?iv[res.iBud]:null,sb=sv?sv[res.sBud]:null,ia=iv?iv[res.iAct]:null,sa=sv?sv[res.sAct]:null;
+    var bd=ib!=null&&sb!=null?Math.round((ib-sb)*100)/100:null;
+    var ad=ia!=null&&sa!=null?Math.round((ia-sa)*100)/100:null;
+    var ok=bd===0&&ad===0,hasE=(bd!=null&&Math.abs(bd)>1)||(ad!=null&&Math.abs(ad)>1);
+    var isSec=['합계','차액'].some(function(k){return lbl.indexOf(k)>=0;});
+    h+='<tr><td class="'+(isSec?'tds':'')+'">'+lbl+'</td>';
+    h+='<td class="n">'+afmt(ib)+'</td><td class="n">'+afmt(sb)+'</td>';
+    h+='<td class="n '+(bd===0?'tdo':bd!=null?'tde':'')+'">'+( bd!=null?(bd===0?'—':(bd>0?'+':'')+afmt(bd)):'-')+'</td>';
+    h+='<td class="n">'+afmt(ia)+'</td><td class="n">'+afmt(sa)+'</td>';
+    h+='<td class="n '+(ad===0?'tdo':ad!=null?'tde':'')+'">'+( ad!=null?(ad===0?'—':(ad>0?'+':'')+afmt(ad)):'-')+'</td>';
+    h+='<td>'+(ok?'✅':hasE?'🔴':'🟡')+'</td></tr>';
+  });
+  p.innerHTML=h+'</tbody></table></div></div>';
+}
+// 회계 탭 클릭
+document.querySelectorAll('.actab').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    document.querySelectorAll('.actab').forEach(function(b){b.classList.remove('on');});
+    document.querySelectorAll('.atpanel').forEach(function(p){p.classList.remove('on');});
+    btn.classList.add('on');
+    var p=document.getElementById('atp-'+btn.getAttribute('data-t'));
+    if(p)p.classList.add('on');
+  });
+});
+
+// ── BUILD EXCEL TEMPLATE ──
+function buildTemplate(){
+  var wb=XLSX.utils.book_new();
+  function bd(c){var s={style:"thin",color:{rgb:c}};return{top:s,bottom:s,left:s,right:s};}
+  function bdm(c){var s={style:"medium",color:{rgb:c}};return{top:s,bottom:s,left:s,right:s};}
+  var S={
+    hdr:{font:{name:"맑은 고딕",bold:true,sz:10,color:{rgb:"FFFFFF"}},fill:{fgColor:{rgb:"1F3864"}},alignment:{horizontal:"center",vertical:"center"},border:bd("AAAAAA")},
+    sub:{font:{name:"맑은 고딕",bold:true,sz:11,color:{rgb:"FFFFFF"}},fill:{fgColor:{rgb:"2E74B5"}},alignment:{horizontal:"center"},border:bd("AAAAAA")},
+    sec:{font:{name:"맑은 고딕",bold:true,sz:10,color:{rgb:"2E74B5"}},fill:{fgColor:{rgb:"D6E4F7"}},alignment:{horizontal:"left"},border:bd("AAAAAA")},
+    inp:{font:{name:"맑은 고딕",sz:10,color:{rgb:"0000FF"}},fill:{fgColor:{rgb:"FFFFFF"}},alignment:{horizontal:"right"},border:bd("AAAAAA"),numFmt:"#,##0"},
+    inpL:{font:{name:"맑은 고딕",sz:10,color:{rgb:"0000FF"}},fill:{fgColor:{rgb:"FFFFFF"}},alignment:{horizontal:"left"},border:bd("AAAAAA")},
+    sub2:{font:{name:"맑은 고딕",bold:true,sz:10,color:{rgb:"1F5C1F"}},fill:{fgColor:{rgb:"E2EFDA"}},alignment:{horizontal:"right"},border:bd("AAAAAA"),numFmt:"#,##0"},
+    sub2L:{font:{name:"맑은 고딕",bold:true,sz:10,color:{rgb:"1F5C1F"}},fill:{fgColor:{rgb:"E2EFDA"}},alignment:{horizontal:"left"},border:bd("AAAAAA")},
+    tot:{font:{name:"맑은 고딕",bold:true,sz:11,color:{rgb:"1F3864"}},fill:{fgColor:{rgb:"C6EFCE"}},alignment:{horizontal:"right"},border:bdm("1F3864"),numFmt:"#,##0"},
+    totH:{font:{name:"맑은 고딕",bold:true,sz:11,color:{rgb:"FFFFFF"}},fill:{fgColor:{rgb:"1F3864"}},alignment:{horizontal:"center"},border:bdm("1F3864")},
+    dif:{font:{name:"맑은 고딕",bold:true,sz:11,color:{rgb:"FFFFFF"}},fill:{fgColor:{rgb:"7B0000"}},alignment:{horizontal:"right"},border:bdm("7B0000"),numFmt:"#,##0;[Red]-#,##0"},
+    difH:{font:{name:"맑은 고딕",bold:true,sz:11,color:{rgb:"FFFFFF"}},fill:{fgColor:{rgb:"7B0000"}},alignment:{horizontal:"center"},border:bdm("7B0000")},
+    lbl:{font:{name:"맑은 고딕",sz:10},fill:{fgColor:{rgb:"FFFFFF"}},alignment:{horizontal:"left"},border:bd("AAAAAA")},
+    noI:{font:{name:"맑은 고딕",sz:9,color:{rgb:"999999"}},fill:{fgColor:{rgb:"FFFFFF"}},alignment:{horizontal:"center"},border:bd("AAAAAA")},
+    ttl:{font:{name:"맑은 고딕",bold:true,sz:15,color:{rgb:"1F3864"}},fill:{fgColor:{rgb:"EBF2FF"}},alignment:{horizontal:"center",vertical:"center"}},
+    note:{font:{name:"맑은 고딕",sz:9,color:{rgb:"666666"},italic:true},fill:{fgColor:{rgb:"F7FBFF"}},alignment:{horizontal:"center",vertical:"center"}},
+    inf:{font:{name:"맑은 고딕",bold:true,sz:10},fill:{fgColor:{rgb:"D6E4F7"}},alignment:{horizontal:"center"},border:bd("AAAAAA")},
+    infV:{font:{name:"맑은 고딕",sz:10,color:{rgb:"0000FF"}},fill:{fgColor:{rgb:"FFFFFF"}},alignment:{horizontal:"left"},border:bd("AAAAAA")}
+  };
+  function cc(r,c){return XLSX.utils.encode_cell({r:r-1,c:c-1});}
+  var ws1={};ws1['!merges']=[];
+  function s1(a,v,st){ws1[a]={v:v===undefined?"":v,t:typeof v==='number'?'n':'s',s:st};if(typeof v==='string'&&v[0]==='='){ws1[a].f=v.slice(1);ws1[a].t='n';ws1[a].v=0;}}
+  function mg1(r1,c1,r2,c2){ws1['!merges'].push({s:{r:r1-1,c:c1-1},e:{r:r2-1,c:c2-1}});}
+  var r=1;
+  mg1(r,1,r,7);s1(cc(r,1),"비영리단체 세입·지출 내역서",S.ttl);r++;
+  mg1(r,1,r,7);s1(cc(r,1),"※ 파란 셀에만 금액을 입력하세요  |  소계·합계·차액은 자동 계산됩니다",S.note);r++;
+  mg1(r,1,r,2);s1(cc(r,1),"단체명",S.inf);mg1(r,3,r,4);s1(cc(r,3),"(단체명 입력)",S.infV);mg1(r,5,r,6);s1(cc(r,5),"회계연도",S.inf);s1(cc(r,7),"2025년",S.infV);r++;
+  ["No.","대분류","항목명","예산액","결산액","전년도결산","비고"].forEach(function(h,i){s1(cc(r,i+1),h,S.hdr);});r++;
+  mg1(r,1,r,7);s1(cc(r,1),"【 세  입 】",S.sub);r++;
+  var iC=[["회비수입",["정회원 회비","준회원 회비","특별 회비","후원 회비"]],["사업수익",["교육사업 수익","컨설팅사업 수익","행사/세미나 수익","기타 사업수익"]],["보조금수입",["정부·지자체 보조금","민간재단 보조금","기업 후원금","개인 기부금"]],["기타수입",["이자수입","잡수입","전기이월금"]]];
+  var iSR={};
+  iC.forEach(function(item){
+    var cat=item[0],items=item[1];
+    mg1(r,1,r,7);s1(cc(r,1),"  ▶ "+cat,S.sec);r++;
+    var rows=[];
+    items.forEach(function(nm,i){s1(cc(r,1),i+1,S.noI);s1(cc(r,2),cat,S.lbl);s1(cc(r,3),"  "+nm,S.lbl);[4,5,6].forEach(function(c){s1(cc(r,c),0,S.inp);});s1(cc(r,7),"",S.inpL);rows.push(r);r++;});
+    mg1(r,1,r,3);s1(cc(r,1),"  "+cat+" 소계",S.sub2L);
+    [4,5,6].forEach(function(c){var l=["","","","","D","E","F"][c];s1(cc(r,c),"=SUMIF(B"+rows[0]+":B"+rows[rows.length-1]+',"'+cat+'",'+l+rows[0]+":"+l+rows[rows.length-1]+")",S.sub2);});
+    s1(cc(r,7),"",{fill:{fgColor:{rgb:"E2EFDA"}},border:bd("AAAAAA")});iSR[cat]=r;r++;
+  });
+  var iD2=Object.values(iSR).map(function(rr){return"D"+rr;}).join("+"),iE=Object.values(iSR).map(function(rr){return"E"+rr;}).join("+"),iF=Object.values(iSR).map(function(rr){return"F"+rr;}).join("+");
+  mg1(r,1,r,3);s1(cc(r,1),"세입 합계 (A)",S.totH);s1(cc(r,4),"="+iD2,S.tot);s1(cc(r,5),"="+iE,S.tot);s1(cc(r,6),"="+iF,S.tot);s1(cc(r,7),"",{fill:{fgColor:{rgb:"C6EFCE"}},border:bdm("1F3864")});var iTR=r;r+=2;
+  mg1(r,1,r,7);s1(cc(r,1),"【 지  출 】",S.sub);r++;
+  var eC=[["인건비",["급여","퇴직급여","4대보험 부담금","일용직 인건비"]],["운영비",["임차료","관리비·공과금","사무용품비","통신비","인쇄·홍보비","회의비"]],["사업비",["교육사업비","행사운영비","컨설팅사업비","기타사업비"]],["기타경비",["여비교통비","접대비","감가상각비","잡비"]]];
+  var eSR={};
+  eC.forEach(function(item){
+    var cat=item[0],items=item[1];
+    mg1(r,1,r,7);s1(cc(r,1),"  ▶ "+cat,S.sec);r++;
+    var rows=[];
+    items.forEach(function(nm,i){s1(cc(r,1),i+1,S.noI);s1(cc(r,2),cat,S.lbl);s1(cc(r,3),"  "+nm,S.lbl);[4,5,6].forEach(function(c){s1(cc(r,c),0,S.inp);});s1(cc(r,7),"",S.inpL);rows.push(r);r++;});
+    mg1(r,1,r,3);s1(cc(r,1),"  "+cat+" 소계",S.sub2L);
+    [4,5,6].forEach(function(c){var l=["","","","","D","E","F"][c];s1(cc(r,c),"=SUMIF(B"+rows[0]+":B"+rows[rows.length-1]+',"'+cat+'",'+l+rows[0]+":"+l+rows[rows.length-1]+")",S.sub2);});
+    s1(cc(r,7),"",{fill:{fgColor:{rgb:"E2EFDA"}},border:bd("AAAAAA")});eSR[cat]=r;r++;
+  });
+  var eD=Object.values(eSR).map(function(rr){return"D"+rr;}).join("+"),eE=Object.values(eSR).map(function(rr){return"E"+rr;}).join("+"),eF=Object.values(eSR).map(function(rr){return"F"+rr;}).join("+");
+  mg1(r,1,r,3);s1(cc(r,1),"지출 합계 (B)",S.totH);s1(cc(r,4),"="+eD,S.tot);s1(cc(r,5),"="+eE,S.tot);s1(cc(r,6),"="+eF,S.tot);s1(cc(r,7),"",{fill:{fgColor:{rgb:"C6EFCE"}},border:bdm("1F3864")});var eTR=r;r+=2;
+  mg1(r,1,r,3);s1(cc(r,1),"차  액  (A - B)",S.difH);
+  [4,5,6].forEach(function(c){var l=["","","","","D","E","F"][c];s1(cc(r,c),"="+l+iTR+"-"+l+eTR,S.dif);});
+  s1(cc(r,7),"",{fill:{fgColor:{rgb:"7B0000"}},border:bdm("7B0000")});
+  ws1['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:r,c:6}});
+  ws1['!cols']=[{wch:4},{wch:18},{wch:28},{wch:13},{wch:13},{wch:13},{wch:16}];
+  XLSX.utils.book_append_sheet(wb,ws1,"세입지출내역");
+  // 결산표 시트
+  var ws2={};ws2['!merges']=[];
+  function s2(a,v,st){ws2[a]={v:v===undefined?"":v,t:typeof v==='number'?'n':'s',s:st};if(typeof v==='string'&&v[0]==='='){ws2[a].f=v.slice(1);ws2[a].t='n';ws2[a].v=0;}}
+  function mg2(r1,c1,r2,c2){ws2['!merges'].push({s:{r:r1-1,c:c1-1},e:{r:r2-1,c:c2-1}});}
+  function cc2(rr,c){return XLSX.utils.encode_cell({r:rr-1,c:c-1});}
+  var r2=1;
+  mg2(r2,1,r2,7);s2(cc2(r2,1),"비영리단체 결 산 표",S.ttl);r2++;
+  mg2(r2,1,r2,7);s2(cc2(r2,1),"※ 파란 셀에만 금액을 입력하세요",S.note);r2++;
+  mg2(r2,1,r2,2);s2(cc2(r2,1),"단체명",S.inf);mg2(r2,3,r2,4);s2(cc2(r2,3),"(단체명 입력)",S.infV);mg2(r2,5,r2,6);s2(cc2(r2,5),"회계연도",S.inf);s2(cc2(r2,7),"2025년",S.infV);r2++;
+  ["No.","항목명","예산액","결산액","전년도결산","증감액","비고"].forEach(function(h,i){s2(cc2(r2,i+1),h,S.hdr);});r2++;
+  mg2(r2,1,r2,7);s2(cc2(r2,1),"【 세입 결산 】",S.sub);r2++;
+  var iSL=["회비수입 합계","사업수익 합계","보조금수입 합계","기타수입 합계"],i2r=[];
+  iSL.forEach(function(nm,i){s2(cc2(r2,1),i+1,S.noI);s2(cc2(r2,2),nm,S.lbl);[3,4,5].forEach(function(c){s2(cc2(r2,c),0,S.inp);});s2(cc2(r2,6),"=D"+r2+"-E"+r2,S.sub2);s2(cc2(r2,7),"",S.inpL);i2r.push(r2);r2++;});
+  mg2(r2,1,r2,2);s2(cc2(r2,1),"세입 합계 (A)",S.totH);
+  [3,4,5].forEach(function(c){var l=["","","","C","D","E"][c];s2(cc2(r2,c),"="+i2r.map(function(rr){return l+rr;}).join("+"),S.tot);});
+  s2(cc2(r2,6),"=D"+r2+"-E"+r2,S.tot);s2(cc2(r2,7),"",{fill:{fgColor:{rgb:"C6EFCE"}},border:bdm("1F3864")});var i2T=r2;r2+=2;
+  mg2(r2,1,r2,7);s2(cc2(r2,1),"【 지출 결산 】",S.sub);r2++;
+  var eSL=["인건비 합계","운영비 합계","사업비 합계","기타경비 합계"],e2r=[];
+  eSL.forEach(function(nm,i){s2(cc2(r2,1),i+1,S.noI);s2(cc2(r2,2),nm,S.lbl);[3,4,5].forEach(function(c){s2(cc2(r2,c),0,S.inp);});s2(cc2(r2,6),"=D"+r2+"-E"+r2,S.sub2);s2(cc2(r2,7),"",S.inpL);e2r.push(r2);r2++;});
+  mg2(r2,1,r2,2);s2(cc2(r2,1),"지출 합계 (B)",S.totH);
+  [3,4,5].forEach(function(c){var l=["","","","C","D","E"][c];s2(cc2(r2,c),"="+e2r.map(function(rr){return l+rr;}).join("+"),S.tot);});
+  s2(cc2(r2,6),"=D"+r2+"-E"+r2,S.tot);s2(cc2(r2,7),"",{fill:{fgColor:{rgb:"C6EFCE"}},border:bdm("1F3864")});var e2T=r2;r2+=2;
+  mg2(r2,1,r2,2);s2(cc2(r2,1),"차  액  (A - B)",S.difH);
+  [3,4,5].forEach(function(c){var l=["","","","C","D","E"][c];s2(cc2(r2,c),"="+l+i2T+"-"+l+e2T,S.dif);});
+  s2(cc2(r2,6),"=D"+r2+"-E"+r2,S.dif);s2(cc2(r2,7),"",{fill:{fgColor:{rgb:"7B0000"}},border:bdm("7B0000")});
+  ws2['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:r2,c:6}});
+  ws2['!cols']=[{wch:4},{wch:26},{wch:14},{wch:14},{wch:14},{wch:14},{wch:16}];
+  XLSX.utils.book_append_sheet(wb,ws2,"결산표");
+  XLSX.writeFile(wb,"비영리단체_회계양식.xlsx",{bookType:"xlsx",type:"binary",cellStyles:true});
+}
+
+// ── CONTACT ──
+function selFT(btn){document.querySelectorAll('.ftb').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');}
+function submitCt(){
+  var n=document.getElementById('cn').value.trim(),e=document.getElementById('ce').value.trim(),m=document.getElementById('cm').value.trim();
+  if(!n||!e||!m){alert('이름, 이메일, 메시지를 모두 입력해주세요.');return;}
+  alert('문의가 접수되었습니다!\n영업일 1~2일 내에 연락드리겠습니다 🙏');
+  ['cn','ce','cm'].forEach(function(id){document.getElementById(id).value='';});
+}
+</script>
+</body>
+</html>
